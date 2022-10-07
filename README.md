@@ -1,1 +1,1 @@
-This project is made to calculate and display common stock metrics for two stocks
+This project is made to calculate and display 5 common stock ratios for the evaluation of two different public companies on the NYSE

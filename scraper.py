@@ -4,7 +4,7 @@ import requests
 class scraper:
     """
     class to scrape data off of balance sheets, income statments, and necessary websites to
-    then calculate 5 common ratios used to evaluatea stock
+    then calculate 5 common ratios used to evaluate a stock
     """
 
 
@@ -13,6 +13,8 @@ class scraper:
         Creates a new scraper object
         and initializes fields
         """
+        self.ticker = ticker
+
         self.income_url = "https://www.marketwatch.com/investing/stock/" + str(ticker) + "/financials/income/quarter"
         self.income_result = requests.get(self.income_url)
         self.income_doc = BeautifulSoup(self.income_result.text, "html.parser")
@@ -21,10 +23,6 @@ class scraper:
         self.result = requests.get(self.url)
         self.doc = BeautifulSoup(self.result.text, "html.parser")
 
-        self.eps_url = "https://www.benzinga.com/quote/" + str(ticker).upper() + "/earnings"
-        self.eps_result = requests.get(self.eps_url)
-        self.eps_doc = BeautifulSoup(self.eps_result.text, "html.parser")
-
         # setting data
         self.quarterly_assets = self.get_quarterly_assets()
         self.quarterly_liabilities = self.get_quarterly_liabilities()
@@ -32,6 +30,39 @@ class scraper:
         self.curr_price = self.get_curr_price()
         self.quarter_net_income = self.get_quarter_net_income()
         self.previous_equity = self.get_previous_equity()
+
+    @staticmethod
+    def is_valid(ticker):
+        """
+        Ensures that the link with the given ticker symbol
+        is valid, meaning this ticker exists and has data available.
+        returns tuple (0) if ticker is valid
+        returns tuple (1) if ticker doesn't exist
+        returns tuple (2, <name of exchange>) if ticker is not on NASDAQ or NYSE
+        returns tuple (3) if ticker has no data available
+        """
+        try:
+            main_url = "https://marketwatch.com/investing/stock/" + str(ticker) + "/financials/balance-sheet/quarter"
+            main_result = requests.get(main_url)
+            main_doc = BeautifulSoup(main_result.text, "html.parser")
+            exchange = main_doc.find(class_ = "company__market").text
+
+            if exchange != "U.S.: Nasdaq" and exchange !="U.S.: NYSE":
+                return (2, exchange)# if ticker is on wrong exchange
+        except:
+            return (1,) # if ticker doesn't exist
+        
+        try:
+            table_test = main_doc.find("tbody", class_="table__body row-hover")
+            row_test = table_test.find_all("span")
+        except:
+            return (3,) # if the data doesn't exist
+        
+
+        return (0,) # if everything passes
+
+            
+
 
     def get_quarterly_assets(self) -> dict:
         """
@@ -112,7 +143,7 @@ class scraper:
 
     def get_curr_price(self) -> float:
         """
-        gets the current ticker pirce of company
+        gets the current trading price of company
         """
 
         section = self.doc.find(class_ = "intraday__data")
@@ -130,7 +161,12 @@ class scraper:
         """
         row = self.income_doc.find(text = "Net Income").parent.parent.parent
         data = row.find_all("td")[5].text
-        data = self.num_format(data)
+        if data[0] == "(":
+            negative = data[1:len(data)-1]
+            negative = self.num_format(negative)
+            data = negative * -1
+        else:
+            data = self.num_format(data)
         return data
 
     def get_previous_equity(self) -> float:
@@ -227,8 +263,8 @@ class scraper:
         and returns NA if its 0 or there was an error
         with the data (some companies dont have data for every section)
         """
-        if self.eps <= 0:
-            return 0
+        if self.eps == 0:
+            return "NA"
         pte = self.curr_price / self.eps
         return round(pte, 2)
 
@@ -242,7 +278,7 @@ class scraper:
         try:
             numerator = ( self.quarter_net_income * 4 ) 
             denominator = ( (self.quarterly_liabilities["Total Equity"] + self.previous_equity) / 2 )
-            roe = numerator / denominator
+            roe = (numerator / denominator) * 100
             if roe == 0:
                 return "NA"
             return round(roe, 2)

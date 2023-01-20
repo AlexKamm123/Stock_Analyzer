@@ -42,6 +42,7 @@ class scraper:
         returns tuple (3) if ticker has no data available
         """
         try:
+
             main_url = "https://marketwatch.com/investing/stock/" + str(ticker) + "/financials/balance-sheet/quarter"
             main_result = requests.get(main_url)
             main_doc = BeautifulSoup(main_result.text, "html.parser")
@@ -53,8 +54,7 @@ class scraper:
             return (1,) # if ticker doesn't exist
         
         try:
-            table_test = main_doc.find("tbody", class_="table__body row-hover")
-            row_test = table_test.find_all("span")
+            scrapeTest = scraper(ticker)
         except:
             return (3,) # if the data doesn't exist
         

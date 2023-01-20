@@ -24,7 +24,7 @@ while i <= num_stocks:
             print(f"{stock} is on ({validity[1]}), not on the NYSE or NASDAQ")
             i-=1
         elif validity[0] == 3:
-            print(f"{stock} does not have data available")
+            print(f"{stock} has insufficient data avilable")
             i-=1
         else:
             tickers.append(stock)

@@ -51,11 +51,9 @@ for ticker in tickers:
     pte = scrape.get_price_to_earnings_ratio()
     roe = scrape.get_return_on_equity()
 
-    #print(f"qr = {qr}, cr = {cr}, dte = {dte}, pte = {pte}, roe = {roe}")
-
     values = [qr, cr, dte, pte, roe]
     values = [np.nan if val == "NA" else val for val in values]
-    bar = plt.bar(xpos + WIDTH * count, values, WIDTH, label = ticker, edgecolor = "black")
+    bar = plt.bar(xpos + WIDTH * count, values, WIDTH, label = ticker)
     plt.bar_label(bar, fontsize = 8, padding = 3)
 
     count +=1
